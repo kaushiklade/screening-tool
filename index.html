@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Candidate Screening Pro</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      /* --- Custom Dark/Light Theme Setup --- */
+      :root {
+        /* Light Theme Defaults */
+        --bg-color: #ffffff; /* Page Background (White) */
+        --text-color: #0f172a; /* Text (Slate 900) */
+        --card-bg: #ffffff; /* Card/Input Background (White) */
+        --card-border: #e2e8f0; /* Border (Slate 200) */
+        --header-bg: #ffffff; /* Header/Toolbar Background (White) */
+      }
+      .dark-theme {
+        /* Dark Theme Overrides */
+        --bg-color: #111827; /* Page Background (Gray 900) */
+        --text-color: #f3f4f6; /* Text (Gray 100) */
+        --card-bg: #1f2937; /* Card/Input Background (Gray 800) */
+        --card-border: #374151; /* Border (Gray 700) */
+        --header-bg: #1f2937; /* Header/Toolbar Background (Gray 800) */
+      }
+      
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      /* Apply theme variables to specific elements (used where Tailwind classes aren't sufficient) */
+      .header-bg { background-color: var(--header-bg); border-color: var(--card-border); }
+
+      /* General Styles */
+      path { transition: opacity 0.3s ease, transform 0.2s ease; }
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: var(--card-bg); }
+      ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script id="defaults" type="application/json">
+      {
+        "Machine Learning": [
+          {"question":"Explain the difference between supervised and unsupervised learning.","expected_answer":["Supervised: uses labeled data to train models.","Unsupervised: finds patterns in unlabeled data.","Supervised is used for classification/regression; unsupervised for clustering/anomaly detection."]},
+          {"question":"How do you prevent overfitting in ML models?","expected_answer":["Use cross-validation.","Add regularization (L1/L2).","Simplify the model.","Collect more data.","Use dropout (for NN models)."]}
+        ],
+        "Deep Learning": [
+          {"question":"What is the role of activation functions in neural networks?","expected_answer":["Introduce non-linearity.","Allow the network to learn complex patterns.","Common functions: ReLU, Sigmoid, Tanh."]}
+        ],
+        "Forecasting":[
+          {"question":"What is the difference between ARIMA and exponential smoothing?","expected_answer":["ARIMA uses autoregression + differencing + moving averages.","Exponential smoothing uses weighted averages of past values."]}
+        ],
+        "NLP and Generative AI":[
+          {"question":"What is tokenization in NLP?","expected_answer":["Splitting text into smaller units (tokens).","Can be word-level, subword-level, or character-level."]}
+        ],
+        "Computer Vision":[
+          {"question":"What is convolution in CNNs?","expected_answer":["Operation that applies filters to extract features.","Captures edges, textures, patterns."]}
+        ]
+      }
+    </script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      // --- UTILS: Get Fixed IST Date ---
+      function getISTDate() {
+          const now = new Date();
+          // Convert to IST (UTC + 5:30)
+          const istOffset = 5.5 * 60 * 60 * 1000;
+          const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+          const istTime = new Date(utc + istOffset);
+          
+          // Format as YYYY-MM-DD
+          return istTime.toISOString().split('T')[0];
+      }
+
+
+      // --- UTILS: File Loading Logic ---
+      async function loadDefaults() {
+        try {
+            const r = await fetch("default_questions.json"); 
+            if (!r.ok) {
+                 throw new Error("External JSON fetch failed.");
+            }
+            return await r.json();
+        } catch (e) {
+            console.warn("Could not fetch external JSON. Falling back to inline data.");
+            try {
+                const el = document.getElementById("defaults");
+                return JSON.parse(el.textContent);
+            } catch (e2) {
+                console.error("Failed to load even the inline defaults.");
+                return {};
+            }
+        }
+      }
+
+      // --- COMPONENT: SVG PIE CHART ---
+      function SvgPie({ data, width = 220, height = 220, innerRadius = 60, colors = [] }) {
+        const [hoveredSlice, setHoveredSlice] = useState(null);
+        const total = data.reduce((s, d) => s + (d.value || 0), 0) || 1;
+        const cx = width / 2, cy = height / 2, r = Math.min(width, height) / 2 - 4;
+        let angle = -Math.PI / 2;
+
+        function polarToCartesian(cx, cy, r, theta) {
+          return [cx + r * Math.cos(theta), cy + r * Math.sin(theta)];
+        }
+
+        const paths = data.map((d, i) => {
+          const portion = (d.value || 0) / total;
+          const nextAngle = angle + portion * Math.PI * 2;
+          const start = polarToCartesian(cx, cy, r, angle);
+          const end = polarToCartesian(cx, cy, r, nextAngle);
+          const large = portion > 0.5 ? 1 : 0;
+          const isCircle = portion === 1; 
+          
+          let path = isCircle 
+            ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`
+            : `M ${cx} ${cy} L ${start[0]} ${start[1]} A ${r} ${r} 0 ${large} 1 ${end[0]} ${end[1]} Z`;
+
+          angle = nextAngle;
+          return { path, color: colors[i % colors.length], name: d.name, value: d.value, percent: Math.round(portion * 100) };
+        });
+
+        return (
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            {paths.map((p, i) => (
+              <path
+                key={i} d={p.path} fill={p.color} stroke="#fff" strokeWidth={hoveredSlice === i ? 2 : 1}
+                style={{ opacity: hoveredSlice !== null && hoveredSlice !== i ? 0.3 : 1, cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredSlice(i)} onMouseLeave={() => setHoveredSlice(null)}
+              />
+            ))}
+            {/* Center Circle fill should be white for contrast against chart, regardless of theme */}
+            <circle cx={cx} cy={cy} r={innerRadius} fill="#fff"></circle> 
+            <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#333">
+              {hoveredSlice !== null ? (
+                <>
+                  <tspan x={cx} dy="-10" fontSize="10" fontWeight="bold">{paths[hoveredSlice].name.slice(0,15)}</tspan>
+                  <tspan x={cx} dy="20" fontSize="14" fill="#666">{paths[hoveredSlice].value} ({paths[hoveredSlice].percent}%)</tspan>
+                </>
+              ) : (
+                <>
+                  <tspan x={cx} dy="-5" fontSize="11" fill="#888">Total Correct</tspan>
+                  <tspan x={cx} dy="20" fontSize="18" fontWeight="bold">{data.reduce((a, c) => a + c.value, 0)}</tspan>
+                </>
+              )}
+            </text>
+          </svg>
+        );
+      }
+
+      // --- COMPONENT: MULTI-SELECT DROPDOWN ---
+      function MultiSelect({ options, selected, onChange }) {
+        const [isOpen, setIsOpen] = useState(false);
+        const ref = useRef(null);
+
+        useEffect(() => {
+            function handleClickOutside(event) {
+                if (ref.current && !ref.current.contains(event.target)) setIsOpen(false);
+            }
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }, [ref]);
+
+        const toggleOption = (opt) => {
+            const newSelected = selected.includes(opt) 
+                ? selected.filter(s => s !== opt)
+                : [...selected, opt];
+            onChange(newSelected);
+        };
+
+        return (
+            <div className="relative inline-block text-left z-20" ref={ref}>
+                <button 
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="inline-flex justify-between items-center w-56 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600"
+                >
+                    <span className="truncate">Filter Categories ({selected.length})</span>
+                    <svg className="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                </button>
+                {isOpen && (
+                    <div className="origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700">
+                        <div className="py-1">
+                             <div className="px-4 py-2 border-b dark:border-gray-700 flex justify-between bg-gray-50 dark:bg-gray-700">
+                                <button className="text-xs text-blue-600 font-bold hover:underline" onClick={() => onChange(options)}>Select All</button>
+                                <button className="text-xs text-red-500 hover:underline" onClick={() => onChange([])}>Clear</button>
+                             </div>
+                            {options.map((opt) => (
+                                <label key={opt} className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                        checked={selected.includes(opt)}
+                                        onChange={() => toggleOption(opt)}
+                                    />
+                                    <span className="ml-3 text-sm block truncate">{opt}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+      }
+
+      // --- MAIN APP ---
+      function App() {
+        const [data, setData] = useState(null);
+        const [revealed, setRevealed] = useState({});
+        const [answers, setAnswers] = useState({}); 
+        const [collapsedCat, setCollapsedCat] = useState({});
+        const [summaryCollapsed, setSummaryCollapsed] = useState(false);
+        const [activeCategories, setActiveCategories] = useState([]);
+        const [globalReveal, setGlobalReveal] = useState(false);
+        const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+        
+        const [candidate, setCandidate] = useState({
+            name: "",
+            email: "",
+            date: getISTDate() 
+        });
+
+        // Load Data and Theme
+        useEffect(() => {
+          loadDefaults().then((d) => {
+            setData(d);
+            setActiveCategories(Object.keys(d));
+          });
+          document.documentElement.className = theme === 'dark' ? 'dark-theme' : 'light-theme';
+        }, []);
+        
+        // Theme Toggle Effect
+        useEffect(() => {
+            document.documentElement.className = theme === 'dark' ? 'dark-theme' : 'light-theme';
+            localStorage.setItem('theme', theme);
+        }, [theme]);
+        
+        const toggleTheme = () => {
+            setTheme(currentTheme => currentTheme === 'light' ? 'dark' : 'light');
+        };
+
+        const handleScreenshot = () => {
+             const element = document.getElementById("report-card");
+             if(!element) return;
+             html2canvas(element, { 
+                scale: 2, 
+                backgroundColor: theme === 'dark' ? "#1f2937" : "#ffffff" // Card background color
+            }).then(canvas => {
+                 const link = document.createElement('a');
+                 link.download = `${candidate.name || 'Candidate'}_Screening_Report.png`;
+                 link.href = canvas.toDataURL("image/png");
+                 link.click();
+             });
+        };
+
+        const toggleReveal = (cat, idx) => {
+          setRevealed((r) => ({ ...r, [cat + "__" + idx]: !r[cat + "__" + idx] }));
+        };
+        
+        const toggleGlobalReveal = () => {
+             const newState = !globalReveal;
+             setGlobalReveal(newState);
+             if (newState) {
+                 setRevealed({});
+             }
+        };
+
+        const markAnswer = (cat, idx, val) => {
+          setAnswers((a) => {
+            const n = { ...a };
+            if (!n[cat]) n[cat] = {};
+            n[cat][idx] = val;
+            return n;
+          });
+        };
+
+        const computeScores = () => {
+          const cs = {};
+          let totalCorrect = 0;
+          let totalQuestions = 0;
+          
+          activeCategories.forEach((cat) => {
+             if(!data[cat]) return;
+             const arr = data[cat];
+             const catAnswers = answers[cat] || {};
+             let correct = 0;
+             arr.forEach((q, i) => {
+               totalQuestions++;
+               if (catAnswers[i] === true) {
+                 correct++;
+                 totalCorrect++;
+               }
+             });
+             cs[cat] = {
+               correct,
+               total: arr.length,
+               percent: arr.length ? Math.round((correct / arr.length) * 100) : 0,
+             };
+          });
+
+          const overall = Math.round((totalCorrect / (totalQuestions || 1)) * 100);
+          return { categoryScores: cs, overall, totalQuestions };
+        };
+
+        if (!data) return <div className="p-10 text-center bg-white dark:bg-gray-800 rounded-lg shadow-lg">Loading App...</div>;
+
+        const { categoryScores, overall, totalQuestions } = computeScores();
+        const pieData = Object.keys(categoryScores).map((c) => ({
+          name: c,
+          value: categoryScores[c].correct || 0,
+        }));
+        
+        const COLORS = ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#F44336", "#00BCD4", "#3F51B5"];
+        
+        return (
+          <div className="min-h-screen flex flex-col font-sans">
+            
+            {/* --- HEADER (Candidate Input) --- */}
+            <div className="header-bg border-b dark:border-gray-700 sticky top-0 z-50 shadow-md">
+                <div className="max-w-7xl mx-auto px-4 py-3">
+                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                        <div className="flex items-center gap-2">
+                             <div className="bg-blue-600 text-white p-2 rounded-lg font-bold">HR</div>
+                             <div>
+                                <h1 className="text-lg font-bold leading-tight">Screening Console</h1>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Technical Interview Assistant</p>
+                             </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                            {/* Candidate Name Input - FIXED THEME CLASSES */}
+                            <input 
+                                type="text" placeholder="Candidate Name"
+                                className="px-3 py-2 border rounded text-sm focus:border-blue-500 outline-none flex-1 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                value={candidate.name} onChange={e => setCandidate({...candidate, name: e.target.value})}
+                            />
+                            {/* Candidate Email Input - FIXED THEME CLASSES */}
+                            <input 
+                                type="email" placeholder="Email"
+                                className="px-3 py-2 border rounded text-sm focus:border-blue-500 outline-none flex-1 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                value={candidate.email} onChange={e => setCandidate({...candidate, email: e.target.value})}
+                            />
+                            {/* Fixed Date Input - Theme Adjusted */}
+                            <input 
+                                type="text" readOnly
+                                className="bg-transparent -3 py-2 rounded text-sm outline-none w-32 text-center"
+                                value={candidate.date}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* --- TOOLBAR (Filter, Global Toggle, Theme Toggle) --- */}
+            <div className="bg-bg-transparent top-[72px] z-40 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 py-3 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex gap-3 items-center w-full">
+                        <MultiSelect 
+                            options={Object.keys(data)} 
+                            selected={activeCategories} 
+                            onChange={setActiveCategories} 
+                        />
+                        
+                        {/* Global Answer Toggle */}
+                        <button
+                            onClick={toggleGlobalReveal}
+                            className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded shadow-sm transition ${
+                                globalReveal 
+                                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                            }`}
+                        >
+                             {globalReveal ? (
+                                <><svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.082-2.28 10.05 10.05 0 013.92-2.929M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.95 19.94c.325.044.653.064.98.064 4.478 0 8.268-2.943 9.543-7a9.97 9.97 0 00-1.082-2.28 10.05 10.05 0 00-3.92-2.929" /></svg> Hide All Answers</>
+                             ) : (
+                                <><svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Show All Answers</>
+                             )}
+                        </button>
+                        
+                        {/* Theme Toggle */}
+                        {/* <button
+                            onClick={toggleTheme}
+                            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                            title="Toggle Light/Dark Theme"
+                        >
+                            {theme === 'light' ? (
+                                <svg className="w-6 h-6 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg> // Moon
+                            ) : (
+                                <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg> // Sun
+                            )}
+                        </button> */}
+                    </div>
+
+                    <button
+                      onClick={() => setSummaryCollapsed((s) => !s)}
+                      className="md:hidden w-full px-3 py-2 bg-blue-600 text-white rounded shadow font-medium"
+                    >
+                      {summaryCollapsed ? "View Report" : "Close Report"}
+                    </button>
+                </div>
+            </div>
+
+            {/* --- MAIN GRID --- */}
+            <div className="flex-1 max-w-7xl mx-auto px-4 pb-10 w-full grid grid-cols-1 lg:grid-cols-4 gap-6 relative">
+                
+                {/* QUESTIONS LIST (LEFT) */}
+                <div className="lg:col-span-3 space-y-4">
+                    {activeCategories.length === 0 && (
+                        <div className="p-8 text-center bg-white dark:bg-gray-800 rounded-lg shadow border border-dashed border-gray-300 dark:border-gray-600">
+                            <p className="text-gray-500 dark:text-gray-400">No categories selected. Please use the filter above.</p>
+                        </div>
+                    )}
+
+                    {Object.keys(data)
+                        .filter(cat => activeCategories.includes(cat))
+                        .map((cat) => (
+                    <div key={cat} className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm overflow-hidden">
+                        {/* Category Header */}
+                        <div
+                            className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                            onClick={() => setCollapsedCat((s) => ({ ...s, [cat]: !s[cat] }))}
+                        >
+                            <div className="flex items-center gap-3">
+                                <h2 className="font-semibold text-slate-700 dark:text-white">{cat}</h2>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${categoryScores[cat]?.percent >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-white' : 'bg-gray-200 text-gray-600 dark:bg-gray-500 dark:text-white'}`}>
+                                    {categoryScores[cat]?.correct}/{categoryScores[cat]?.total}
+                                </span>
+                            </div>
+                            <svg className={`h-5 w-5 text-gray-400 transform transition-transform ${collapsedCat[cat] ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+
+                        {/* Question Cards (Individual Questions) - Theme Adjusted */}
+                        {!collapsedCat[cat] && (
+                        <div className="p-4 space-y-4">
+                            {data[cat].map((q, idx) => (
+                            <div key={idx} className="flex flex-col md:flex-row gap-4 p-4 rounded-lg bg-white dark:bg-gray-800 border border-slate-100 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-500 transition-colors shadow-sm">
+                                <div className="flex-1">
+                                    <div className="font-medium text-slate-800 dark:text-white text-sm md:text-base">
+                                        <span className="text-slate-400 dark:text-slate-300 font-normal mr-2">#{idx+1}</span>
+                                        {q.question}
+                                    </div>
+                                    
+                                    {(revealed[cat + "__" + idx] || globalReveal) && (
+                                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded text-sm border border-blue-100 dark:border-blue-800 animate-fadeIn">
+                                            <p className="font-semibold mb-1 text-xs uppercase tracking-wide opacity-70">Expected Answer:</p>
+                                            {/* *** MODIFIED SECTION START *** */}
+                                            <ul className="list-disc pl-4 space-y-1 text-blue-900 dark:text-blue-100">
+                                                {q.expected_answer.map((a, i) => <li key={i}>{a}</li>)}
+                                            </ul>
+                                            {/* *** MODIFIED SECTION END *** */}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex flex-row md:flex-col items-center md:items-end gap-2 min-w-[120px]">
+                                    <button onClick={() => toggleReveal(cat, idx)} className="text-xs font-medium text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 underline">
+                                        {(revealed[cat + "__" + idx] || globalReveal) ? "Hide Answer" : "Show Answer"}
+                                    </button>
+                                    <div className="flex gap-1 bg-slate-100 dark:bg-gray-700 p-1 rounded-lg">
+                                        <button 
+                                            onClick={() => markAnswer(cat, idx, true)}
+                                            className={`p-2 rounded md:w-full flex justify-center ${answers[cat]?.[idx] === true ? 'bg-green-500 text-white shadow' : 'text-slate-400 hover:text-green-600'}`}
+                                        >
+                                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                        </button>
+                                        <button 
+                                            onClick={() => markAnswer(cat, idx, false)}
+                                            className={`p-2 rounded md:w-full flex justify-center ${answers[cat]?.[idx] === false ? 'bg-red-500 text-white shadow' : 'text-slate-400 hover:text-red-600'}`}
+                                        >
+                                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                        )}
+                    </div>
+                    ))}
+                </div>
+
+                {/* SUMMARY / REPORT CARD (RIGHT) */}
+                {/* Mobile overlay for the sidebar */}
+                <div className={`fixed inset-0 bg-black/50 z-40 lg:hidden ${summaryCollapsed ? 'hidden' : 'block'}`} onClick={() => setSummaryCollapsed(true)}></div>
+                
+                <div className={`
+                    fixed lg:sticky top-0 lg:top-[110px] right-0 h-full lg:h-auto 
+                    w-80 lg:w-full bg-transparent lg:bg-transparent shadow-2xl lg:shadow-none 
+                    transform transition-transform duration-300 z-30
+                    ${summaryCollapsed ? 'translate-x-full lg:translate-x-0' : 'translate-x-0'}
+                `}>
+                    {/* The Element we will Screenshot */}
+                    {/* Report Card - Theme Adjusted */}
+                    <div id="report-card" className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border dark:border-gray-700 p-5">
+                        
+                        <div className="flex justify-between items-start mb-4 border-b dark:border-gray-700 pb-4">
+                            <div>
+                                <h3 className="font-bold text-lg">Interview Report 📝</h3>
+                                <div className="text-sm text-slate-500 dark:text-slate-300">
+                                    {candidate.name || "Candidate Name"} 
+                                    {candidate.email && (
+                                        <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">({candidate.email})</span>
+                                    )}
+                                </div>
+                                <div className="text-xs text-slate-400 dark:text-slate-500">Date (IST): {candidate.date}</div>
+                            </div>
+                            <div className={`text-2xl font-black ${overall >= 70 ? 'text-green-500' : 'text-slate-700 dark:text-white'}`}>
+                                {overall}%
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center mb-6 relative">
+                             {totalQuestions > 0 ? (
+                                 <SvgPie data={pieData} width={200} height={200} innerRadius={60} colors={COLORS} />
+                             ) : (
+                                 <div className="h-40 w-full flex items-center justify-center text-slate-400 text-sm italic bg-slate-100 dark:bg-gray-700 rounded">
+                                     Select categories & mark answers
+                                 </div>
+                             )}
+                        </div>
+
+                        <div className="space-y-3 mb-6">
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Breakdown</h4>
+                            {Object.keys(categoryScores).map((cat, i) => (
+                                <div key={cat} className="flex justify-between items-center text-xs">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-1 rounded-full" style={{background: COLORS[i%COLORS.length]}}></div>
+                                        <span className="truncate w-36" title={cat}>{cat}</span>
+                                    </div>
+                                    <div className="font-mono text-slate-600 dark:text-slate-300">
+                                        {categoryScores[cat].correct}/{categoryScores[cat].total}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button 
+                            onClick={handleScreenshot}
+                            className="w-full py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 flex items-top justify-center gap-2 transition dark:bg-blue-600 dark:hover:bg-blue-500"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Save Report Card (PNG)
+                        </button>
+                    </div>
+
+                    <div className="text-center mt-4 text-xs text-slate-400 dark:text-slate-500 lg:block hidden">
+                        * Overall score is based only on the visible/selected categories.
+                    </div>
+                </div>
+
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>

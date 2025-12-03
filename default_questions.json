@@ -1,0 +1,468 @@
+{
+  "Machine Learning": [
+    {
+      "question": "Explain the difference between supervised and unsupervised learning.",
+      "expected_answer": [
+        "Supervised: uses labeled data to train models.",
+        "Unsupervised: finds patterns in unlabeled data.",
+        "Supervised is used for classification/regression; unsupervised for clustering/anomaly detection."
+      ]
+    },
+    {
+        "question": "What is the fundamental difference between supervised and unsupervised learning?",
+        "expected_answer": [
+          "**Supervised Learning** uses **labeled** training data (input-output pairs) to predict future outputs.",
+          "**Unsupervised Learning** uses **unlabeled** data to find hidden patterns or structures in the data.",
+          "Classification and Regression are supervised; Clustering and Dimensionality Reduction are unsupervised."
+        ]
+      },
+      {
+        "question": "Define and briefly explain the difference between Bias and Variance.",
+        "expected_answer": [
+          "**Bias** is the error from overly simplifying a complex problem (leads to **underfitting**).",
+          "**Variance** is the error from the model being too sensitive to small changes in training data (leads to **overfitting**).",
+          "The goal is to find the **bias-variance trade-off**."
+        ]
+      },
+      {
+        "question": "What is $L_1$ and $L_2$ regularization, and what is the key difference in their effect?",
+        "expected_answer": [
+          "Both $L_1$ (Lasso) and $L_2$ (Ridge) add a penalty term to the loss function to prevent **overfitting**.",
+          "**$L_1$** tends to force some coefficients to become exactly **zero**, performing built-in feature selection.",
+          "**$L_2$** shrinks coefficients but rarely sets them to zero."
+        ]
+      },
+      {
+        "question": "Explain the concept of the ROC curve and the AUC score.",
+        "expected_answer": [
+          "The **ROC Curve** plots the performance of a classification model across all possible classification thresholds.",
+          "It plots the **True Positive Rate (TPR)** against the **False Positive Rate (FPR)**.",
+          "The **AUC (Area Under the Curve)** represents the model's overall ability to distinguish between classes (higher AUC is better)."
+        ]
+      },
+      {
+        "question": "What is 'Overfitting,' and what is 'Underfitting'?",
+        "expected_answer": [
+          "**Overfitting** occurs when a model performs extremely well on **training data** but poorly on **new, unseen data** (too complex).",
+          "**Underfitting** occurs when a model is too simple to capture the underlying patterns in the data (performs poorly everywhere).",
+          "Overfitting is high variance; Underfitting is high bias."
+        ]
+      },
+      {
+        "question": "What is the primary purpose of Cross-Validation (specifically K-Fold)?",
+        "expected_answer": [
+          "To estimate how well a model will **generalize** to an independent dataset (unseen data).",
+          "It splits the data into $K$ parts, trains $K$ times, and averages the results.",
+          "It provides a **less biased** and more robust estimate of model performance than a single train/test split."
+        ]
+      },
+      {
+        "question": "What is the 'Curse of Dimensionality'?",
+        "expected_answer": [
+          "The phenomenon where the volume of the data space increases so rapidly with the number of features (dimensions).",
+          "This causes the available data to become **sparse**, making it difficult to find meaningful patterns.",
+          "It often leads to models that generalize poorly unless the amount of training data increases exponentially."
+        ]
+      },
+      {
+        "question": "What is a 'Confusion Matrix,' and name its four basic components.",
+        "expected_answer": [
+          "A table used to describe the performance of a classification model on a set of test data.",
+          "The four basic components are: **True Positive (TP)** and **True Negative (TN)** (correct predictions).",
+          "And **False Positive (FP)** and **False Negative (FN)** (incorrect predictions)."
+        ]
+      },
+      {
+        "question": "When would you choose a Decision Tree over a simple Linear Regression model?",
+        "expected_answer": [
+          "When the relationship between the features and the target variable is known to be highly **non-linear**.",
+          "When **interpretability** of the specific decision rules (paths in the tree) is more important than achieving the highest accuracy.",
+          "Decision Trees handle feature scaling and outliers better than linear models."
+        ]
+      },
+      {
+        "question": "Define a 'Feature' and 'Feature Engineering' in ML.",
+        "expected_answer": [
+          "A **Feature** is an **individual measurable property** or characteristic of a phenomenon being observed (the input variables).",
+          "**Feature Engineering** is the process of manually **transforming raw data** into features that better represent the underlying problem to the predictive models.",
+          "It is a crucial step in traditional Machine Learning to improve model performance."
+        ]
+      }
+
+
+  ],
+  "Deep Learning": [
+    {
+      "question": "What is the fundamental difference between Machine Learning (ML) and Deep Learning (DL)?",
+      "expected_answer": [
+        "**ML** requires **manual feature engineering** (a human identifies important characteristics).",
+        "**DL** learns the **features automatically** from raw data through its many layers, reducing the need for human intervention.",
+        "DL uses neural networks with **multiple hidden layers** (Deep Neural Networks)"
+      ]
+    },
+    {
+      "question": "Explain what a 'Neural Network' is in simple terms.",
+      "expected_answer": [
+        "A network of interconnected processing units or **nodes (neurons)** organized in layers, designed to mimic the human brain.",
+        "It takes an **input**, processes it through hidden **layers** of mathematical operations, and produces an **output**.",
+        "The connections between nodes have **weights** that the model learns during training."
+      ]
+    },
+    {
+      "question": "What is an 'Activation Function,' and what is its main role?",
+      "expected_answer": [
+        "It is a mathematical function introduced after a layer's linear operation to give the network the ability to learn **non-linear** and complex relationships.",
+        "Its main role is to decide whether a neuron should be **'fired' (activated)** or not.",
+        "The most common function is the **ReLU** (Rectified Linear Unit)."
+      ]
+    },
+    {
+      "question": "What is 'Backpropagation,' and why is it essential for training?",
+      "expected_answer": [
+        "The core algorithm used to **adjust the weights** and biases of the neural network layers.",
+        "It calculates the **error (loss)** at the output and propagates it **backward** through the network.",
+        "This determines how much each weight contributed to the error, allowing them to be updated to reduce future errors."
+      ]
+    },
+    {
+      "question": "What is the vanishing gradient problem, and what is the primary solution?",
+      "expected_answer": [
+        "The problem where the **gradients (error signals)** flowing backward become extremely small, causing the weights in the **earlier layers** to learn very slowly or stop learning.",
+        "It typically occurs in very deep networks using Sigmoid or Tanh activation functions.",
+        "The primary solution is using the **ReLU activation function** and techniques like **Batch Normalization**."
+      ]
+    },
+    {
+      "question": "What is 'Dropout,' and how does it prevent overfitting?",
+      "expected_answer": [
+        "A regularization technique where a percentage of neurons in a layer are **randomly ignored (set to zero)** during each training step.",
+        "It prevents neurons from co-adapting too much, forcing the network to learn **more robust and redundant features**.",
+        "This prevents the model from relying too heavily on any single neuron or feature, thus reducing overfitting."
+      ]
+    },
+    {
+      "question": "Briefly describe the purpose of the 'Loss Function' (or Cost Function).",
+      "expected_answer": [
+        "A function that measures the **discrepancy** between the model's **predicted output** and the **actual target value**.",
+        "Its calculated value is what the network's optimizer (like Gradient Descent) aims to **minimize**.",
+        "Common examples include Mean Squared Error (MSE) for regression and Cross-Entropy for classification."
+      ]
+    },
+    {
+      "question": "What are Convolutional Neural Networks (CNNs) primarily used for?",
+      "expected_answer": [
+        "They are the standard architecture for **Computer Vision** tasks like Image Recognition and Object Detection.",
+        "They use the **convolution** operation to automatically and effectively extract spatial features (edges, textures) from images.",
+        "They are designed to exploit the spatial structure of the input data."
+      ]
+    },
+    {
+      "question": "What are Recurrent Neural Networks (RNNs) primarily used for?",
+      "expected_answer": [
+        "Designed specifically to handle **sequential data** where the order matters, such as text, audio, and time series.",
+        "They have an internal **'memory' or hidden state** that allows them to use information from previous steps in the sequence.",
+        "Modern variants like LSTMs and GRUs address the vanishing gradient problem in standard RNNs."
+      ]
+    },
+    {
+      "question": "Explain the concept of 'Transfer Learning' in Deep Learning.",
+      "expected_answer": [
+        "Taking a model that has already been **trained and optimized** for a large, general task (the source domain).",
+        "And then **re-using or adapting** that pre-trained model as the starting point for a new, related task (the target domain).",
+        "This saves significant training time and computation, especially when the new task has limited data."
+      ]
+    }
+
+  ],
+  "Forecasting": [
+    {
+      "question": "What is the difference between ARIMA and exponential smoothing?",
+      "expected_answer": [
+        "ARIMA uses autoregression + differencing + moving averages.",
+        "Exponential smoothing uses weighted averages of past values."
+      ]
+    }, 
+    {
+        "question": "What is the primary difference between Time Series Data and regular Cross-Sectional Data?",
+        "expected_answer": [
+          "**Time Series Data** consists of observations recorded at **successive points in time** (e.g., daily stock prices or monthly sales figures).",
+          "Observations in time series data are **dependent** on previous observations.",
+          "**Cross-Sectional Data** are observations collected at a **single point in time** (e.g., population survey results from one year)."
+        ]
+      },
+      {
+        "question": "What are the four main components you look for when decomposing a Time Series?",
+        "expected_answer": [
+          "**Trend:** The long-term direction, either increasing or decreasing.",
+          "**Seasonality:** A pattern that repeats itself at fixed intervals (e.g., sales spiking every December).",
+          "**Cyclicality:** Patterns that repeat but without a fixed frequency (often related to business cycles or economics).",
+          "**Irregular/Residual:** The remaining random variation after accounting for the other three components."
+        ]
+      },
+      {
+        "question": "Explain 'Stationarity' in the context of Time Series analysis.",
+        "expected_answer": [
+          "A time series is **Stationary** if its statistical properties (like the **mean, variance, and autocorrelation**) remain **constant** over time.",
+          "Most classical forecasting models (like ARIMA) **require** the series to be stationary.",
+          "Non-stationary series must be transformed (e.g., by **differencing**) before modeling."
+        ]
+      },
+      {
+        "question": "What is 'Differencing,' and when is it typically applied?",
+        "expected_answer": [
+          "**Differencing** is the process of computing the **difference** between consecutive observations ($Y_t - Y_{t-1}$).",
+          "It is typically applied to a non-stationary time series to **remove the trend** and make the series stationary.",
+          "This process stabilizes the mean of the time series."
+        ]
+      },
+      {
+        "question": "What does the 'Autoregressive' (AR) part of an ARIMA model represent?",
+        "expected_answer": [
+          "The **AR** component means that the model uses the **previous values** of the time series itself to predict the current value.",
+          "It is a linear combination of past observations.",
+          "The 'p' parameter in $\text{ARIMA}(p, d, q)$ defines the number of past observations to include."
+        ]
+      },
+      {
+        "question": "What is the key idea behind 'Exponential Smoothing' methods?",
+        "expected_answer": [
+          "It uses a weighted average of past observations to forecast future values.",
+          "It gives **exponentially decreasing weights** to observations as they get older.",
+          "More recent observations are given **higher importance** in the forecast."
+        ]
+      },
+      {
+        "question": "Define 'Exogenous Variables' (or Regressors) in a forecasting model.",
+        "expected_answer": [
+          "These are **external variables** (not the time series being forecasted) that are included in the model because they have a **predictive relationship** with the target variable.",
+          "Example: Using the 'price of gasoline' (exogenous) to forecast the 'sales of SUVs'.",
+          "They are included in models like **ARIMAX** or regression models."
+        ]
+      },
+      {
+        "question": "Why is 'Out-of-Sample' validation (or testing) critical in forecasting?",
+        "expected_answer": [
+          "It tests the model's performance on a period of data it **has never seen** (data that occurred after the training period).",
+          "This provides the most realistic measure of how well the model will perform on **future, truly unseen data**.",
+          "It helps detect **overfitting**, where a model performs well on historical data but fails on new data."
+        ]
+      },
+      {
+        "question": "What is the difference between an Additive and a Multiplicative decomposition of a time series?",
+        "expected_answer": [
+          "**Additive:** The components (Trend, Seasonality, Residual) are **added** together ($Y_t = T_t + S_t + R_t$). This is used when the seasonal variation remains constant.",
+          "**Multiplicative:** The components are **multiplied** together ($Y_t = T_t \times S_t \times R_t$). This is used when the size of the seasonal variation **increases** with the level of the trend.",
+          "The choice depends on whether the size of the fluctuations changes with the level of the series."
+        ]
+      },
+      {
+        "question": "When would you choose a Machine Learning approach (like XGBoost or LSTMs) over a classical time series model (like ARIMA)?",
+        "expected_answer": [
+          "When the time series relationship is highly **non-linear** or complex.",
+          "When there are **many exogenous variables** and complex interactions between them.",
+          "When dealing with **very long sequences** or when modeling multiple related time series simultaneously (deep learning approaches)."
+        ]
+      }, 
+    {
+      "question": "",
+      "expected_answer": [
+        "",
+        "",
+        ""
+      ]
+    }
+
+
+
+  ],
+  "NLP and Generative AI": [
+    {
+      "question": "What is tokenization in NLP?",
+      "expected_answer": [
+        "Splitting text into smaller units (tokens).",
+        "Can be word-level, subword-level, or character-level."
+      ]
+    }, 
+    {
+        "question": "What is the primary goal of NLP?",
+        "expected_answer": [
+          "To enable computers to **understand, interpret, and generate human language** (text and speech).",
+          "It bridges the gap between human communication and computer understanding.",
+          "Examples include sentiment analysis, machine translation, and text summarization."
+        ]
+      },
+      {
+        "question": "What is 'Tokenization,' and why is it the first step in most NLP pipelines?",
+        "expected_answer": [
+          "**Tokenization** is the process of breaking down a sequence of text into smaller units called **tokens**.",
+          "Tokens are typically **words** or punctuation marks.",
+          "It's the first step because the model needs to process discrete, manageable units of input, not the raw continuous string of text."
+        ]
+      },
+      {
+        "question": "Explain the difference between 'Stemming' and 'Lemmatization.'",
+        "expected_answer": [
+          "**Stemming** reduces a word to its **root form** by crudely chopping off the end (e.g., 'running' becomes 'runn'). The result may not be a real word.",
+          "**Lemmatization** reduces a word to its **base or dictionary form** (lemma) using vocabulary and morphological analysis (e.g., 'better' becomes 'good').",
+          "Lemmatization is generally **more accurate** but computationally slower."
+        ]
+      },
+      {
+        "question": "What are 'Embeddings' in the context of NLP?",
+        "expected_answer": [
+          "Embeddings are **numerical representations** (vectors) of words, phrases, or documents.",
+          "They capture the **meaning and context** of words, placing similar words closer together in the vector space (e.g., 'king' is close to 'queen').",
+          "They allow deep learning models to process human language mathematically."
+        ]
+      },
+      {
+        "question": "In Generative AI, what is a 'Transformer' architecture?",
+        "expected_answer": [
+          "The **Transformer** is a model architecture introduced in 2017 that relies primarily on the **Attention Mechanism** (rather than RNNs).",
+          "It is the foundation for almost all modern large language models (LLMs) like GPT and BERT.",
+          "It allows the model to process all parts of a sequence **simultaneously**, making training much faster and handling long-range dependencies better."
+        ]
+      },
+      {
+        "question": "What is the 'Attention Mechanism' used for in models like the Transformer?",
+        "expected_answer": [
+          "It allows the model to **weigh the importance** of different parts of the input text when processing a specific word.",
+          "It helps the model focus on the most relevant contextual information.",
+          "Example: When processing the word 'it' in a sentence, attention helps the model look back to the noun 'it' refers to."
+        ]
+      },
+      {
+        "question": "What is a Large Language Model (LLM)?",
+        "expected_answer": [
+          "An **LLM** is a type of deep learning model trained on a **massive amount of text data** (hence 'Large').",
+          "Its primary function is to understand, summarize, and **generate human-like text**.",
+          "They are typically based on the Transformer architecture and have billions of parameters."
+        ]
+      },
+      {
+        "question": "What does the 'Generative' part of Generative AI mean?",
+        "expected_answer": [
+          "It means the AI model is capable of **creating new, original content** (e.g., text, images, code) that wasn't explicitly present in its training data.",
+          "It learns the **underlying patterns and structure** of the data, allowing it to produce novel outputs.",
+          "This is distinct from Discriminative AI, which focuses on classification (e.g., is this a cat or a dog?)."
+        ]
+      },
+      {
+        "question": "What is 'Fine-Tuning' an LLM?",
+        "expected_answer": [
+          "It is the process of taking an **already pre-trained LLM** (a base model) and training it further on a **smaller, specific dataset**.",
+          "The goal is to adapt the model to a **specialized task** (e.g., customer support) or a specific domain (e.g., legal documents).",
+          "This is more efficient than training a model from scratch."
+        ]
+      },
+      {
+        "question": "What is 'Prompt Engineering'?",
+        "expected_answer": [
+          "The discipline of **designing the input text (prompts)** given to an LLM to achieve the desired output.",
+          "It involves techniques like providing examples, specifying format, or setting the model's persona.",
+          "It is a key skill for effectively utilizing and controlling Generative AI models."
+        ]
+      }
+
+
+
+  ],
+  "Computer Vision": [
+    {
+      "question": "What is convolution in CNNs?",
+      "expected_answer": [
+        "Operation that applies filters to extract features.",
+        "Captures edges, textures, patterns."
+      ]
+    }, 
+    {
+        "question": "What is the primary goal of Computer Vision (CV)?",
+        "expected_answer": [
+          "To enable computers to **understand and interpret information** from digital images or videos.",
+          "It attempts to automate tasks that the human visual system can do.",
+          "This includes tasks like object recognition, tracking, and scene reconstruction."
+        ]
+      },
+      {
+        "question": "What is the role of a 'Filter' or 'Kernel' in image processing and CNNs?",
+        "expected_answer": [
+          "A filter (or kernel) is a **small matrix** of numbers used to perform **convolution** over an input image.",
+          "Its role is to **extract specific features** from the image, such as edges, textures, or corners.",
+          "Different filters are used to detect different types of features."
+        ]
+      },
+      {
+        "question": "Explain 'Padding' and 'Stride' in a Convolutional Layer.",
+        "expected_answer": [
+          "**Padding:** Adding extra rows/columns (usually zeros) around the border of an input image to prevent the loss of information at the edges and control the output size.",
+          "**Stride:** The number of pixels the filter **shifts** over the input matrix in a single step.",
+          "A larger stride reduces the spatial dimensions of the output volume."
+        ]
+      },
+      {
+        "question": "What is 'Pooling' (or 'Subsampling'), and what is its main benefit?",
+        "expected_answer": [
+          "Pooling is the operation of **reducing the spatial size** of the feature maps (width and height).",
+          "It makes the output representation **smaller and more manageable**.",
+          "It helps reduce computational costs and makes the network more **robust to minor image changes** (like shifts or distortions)."
+        ]
+      },
+      {
+        "question": "What is the most common use of a CNN (Convolutional Neural Network) in Computer Vision?",
+        "expected_answer": [
+          "The most common use is **Image Classification** (e.g., classifying a picture as a 'cat' or 'dog').",
+          "They are also used for **Object Detection** (finding and drawing a bounding box around objects) and **Image Segmentation**."
+        ]
+      },
+      {
+        "question": "Define the difference between 'Image Classification' and 'Object Detection'.",
+        "expected_answer": [
+          "**Image Classification:** Assigns a **single label** to the entire image (e.g., 'This image contains a car').",
+          "**Object Detection:** Identifies **multiple objects** within an image and draws a **bounding box** around each one, providing both the label and location.",
+          "Detection is a more complex task that requires localization."
+        ]
+      },
+      {
+        "question": "What is 'Data Augmentation,' and why is it crucial in Computer Vision?",
+        "expected_answer": [
+          "A technique that involves **creating new training samples** by applying various transformations to the existing images.",
+          "Transformations include rotation, flipping, cropping, and changing brightness.",
+          "It helps **prevent overfitting** and makes the model generalize better to unseen images by increasing the diversity of the training data."
+        ]
+      },
+      {
+        "question": "What is the purpose of the 'Fully Connected Layer' in a traditional CNN?",
+        "expected_answer": [
+          "It is the **final layers** of the CNN before the output layer.",
+          "It takes the high-level features extracted by the convolutional layers and uses them to **classify the input image**.",
+          "Every neuron in the fully connected layer is connected to every neuron in the previous layer."
+        ]
+      },
+      {
+        "question": "What does IoU (Intersection over Union) measure in Object Detection?",
+        "expected_answer": [
+          "IoU is a **metric** used to evaluate how accurately an object detector has localized an object.",
+          "It is the ratio of the **area of overlap** between the predicted bounding box and the true ground-truth bounding box, divided by the **area of union**.",
+          "A higher IoU score (closer to 1) means the detection is more accurate."
+        ]
+      },
+      {
+        "question": "Explain the concept of 'Transfer Learning' in the context of image classification.",
+        "expected_answer": [
+          "It involves taking a large, pre-trained model (like VGG or ResNet) that has learned features from millions of images (e.g., ImageNet).",
+          "You then **re-use the convolutional layers** (the feature extractor) and only retrain the final classification layers on your new, smaller dataset.",
+          "This approach drastically reduces training time and requires less data."
+        ]
+      },
+    {
+      "question": "",
+      "expected_answer": [
+        "",
+        "",
+        ""
+      ]
+    }
+
+
+  ]
+}
