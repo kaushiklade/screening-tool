@@ -42,7 +42,8 @@
       ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
     </style>
   </head>
-  <body class="dark-theme"> <div id="root"></div>
+  <body class="dark-theme">
+    <div id="root"></div>
 
     <script id="defaults" type="application/json">
       {
@@ -137,7 +138,7 @@
                 onMouseEnter={() => setHoveredSlice(i)} onMouseLeave={() => setHoveredSlice(null)}
               />
             ))}
-            {/* Center Circle fill should be white for contrast against chart */}
+            {/* Center Circle fill should be white for contrast against chart, regardless of theme */}
             <circle cx={cx} cy={cy} r={innerRadius} fill="#fff"></circle> 
             <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#333">
               {hoveredSlice !== null ? (
@@ -219,7 +220,6 @@
         const [summaryCollapsed, setSummaryCollapsed] = useState(false);
         const [activeCategories, setActiveCategories] = useState([]);
         const [globalReveal, setGlobalReveal] = useState(false);
-        // theme state and toggling removed
         
         const [candidate, setCandidate] = useState({
             name: "",
@@ -227,16 +227,14 @@
             date: getISTDate() 
         });
 
-        // Load Data - Theme setting removed
+        // Load Data
         useEffect(() => {
           loadDefaults().then((d) => {
             setData(d);
             setActiveCategories(Object.keys(d));
           });
-          // document.documentElement.className = theme === 'dark' ? 'dark-theme' : 'light-theme'; // Removed
         }, []);
         
-        // Theme Toggle Effect Removed
         
         const handleScreenshot = () => {
              const element = document.getElementById("report-card");
@@ -264,40 +262,66 @@
              }
         };
 
+        // *** MODIFIED LOGIC START ***
         const markAnswer = (cat, idx, val) => {
-          setAnswers((a) => {
-            const n = { ...a };
-            if (!n[cat]) n[cat] = {};
-            n[cat][idx] = val;
-            return n;
-          });
+            setAnswers((a) => {
+                const n = { ...a };
+                if (!n[cat]) n[cat] = {};
+                
+                // If the same value is clicked again, reset the answer to undefined
+                if (n[cat][idx] === val) {
+                    delete n[cat][idx];
+                } else {
+                    n[cat][idx] = val;
+                }
+                
+                // If the category object becomes empty, delete it
+                if (Object.keys(n[cat]).length === 0) {
+                    delete n[cat];
+                }
+                
+                return n;
+            });
         };
+        // *** MODIFIED LOGIC END ***
 
         const computeScores = () => {
           const cs = {};
           let totalCorrect = 0;
-          let totalQuestions = 0;
+          let totalQuestions = 0; // Tracks the total *marked* questions
           
           activeCategories.forEach((cat) => {
              if(!data[cat]) return;
              const arr = data[cat];
              const catAnswers = answers[cat] || {};
              let correct = 0;
+             let totalMarkedInCategory = 0;
+             
              arr.forEach((q, i) => {
-               totalQuestions++;
-               if (catAnswers[i] === true) {
-                 correct++;
-                 totalCorrect++;
+               const answer = catAnswers[i];
+               
+               // Only count the question if it has been explicitly marked (true or false)
+               if (answer !== undefined && answer !== null) { 
+                 totalMarkedInCategory++;
+                 totalQuestions++; // Global counter for *marked* questions
+                 
+                 if (answer === true) {
+                   correct++;
+                   totalCorrect++;
+                 }
                }
              });
+             
              cs[cat] = {
                correct,
-               total: arr.length,
-               percent: arr.length ? Math.round((correct / arr.length) * 100) : 0,
+               total: totalMarkedInCategory, // Use marked questions for category total
+               // Calculate percent based on marked questions in the category
+               percent: totalMarkedInCategory ? Math.round((correct / totalMarkedInCategory) * 100) : 0,
              };
           });
 
-          const overall = Math.round((totalCorrect / (totalQuestions || 1)) * 100);
+          // Overall score is based on total marked questions
+          const overall = Math.round((totalCorrect / (totalQuestions || 1)) * 100); 
           return { categoryScores: cs, overall, totalQuestions };
         };
 
@@ -351,7 +375,7 @@
             </div>
             
             {/* --- TOOLBAR (Filter, Global Toggle) --- */}
-            <div className="bg-bg-transparent top-[72px] z-40 shadow-sm">
+            <div className="bg-transparent top-[72px] z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 py-3 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex gap-3 items-center w-full">
                         <MultiSelect 
@@ -431,11 +455,9 @@
                                     {(revealed[cat + "__" + idx] || globalReveal) && (
                                         <div className="mt-3 p-3 bg-blue-900 text-blue-100 rounded text-sm border border-blue-800 animate-fadeIn">
                                             <p className="font-semibold mb-1 text-xs uppercase tracking-wide opacity-70">Expected Answer:</p>
-                                            {/* *** MODIFIED SECTION START *** */}
                                             <ul className="list-disc pl-4 space-y-1 text-blue-100">
                                                 {q.expected_answer.map((a, i) => <li key={i}>{a}</li>)}
                                             </ul>
-                                            {/* *** MODIFIED SECTION END *** */}
                                         </div>
                                     )}
                                 </div>
